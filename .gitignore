@@ -1,0 +1,8 @@
+.cpcache/
+.nrepl-port
+.lsp/
+target/
+*.swp
+*.swo
+*~
+.DS_Store
