@@ -66,15 +66,15 @@ human-in-the-loop interrupt/resume via checkpointing.
                                           +-> :hold               (:hard? true)
 ```
 
-- `src/atc_support/store.cljc` — `Store` protocol + `MemStore`:
+- `src/atc_support/store.kotoba` — `Store` protocol + `MemStore`:
   registered controllers and facilities, committed operations, an append-only audit ledger.
-- `src/atc_support/advisor.cljc` — `Advisor` protocol; `mock-advisor`
+- `src/atc_support/advisor.kotoba` — `Advisor` protocol; `mock-advisor`
   (deterministic, default) proposes an ATC support action from a
   request; `llm-advisor` wraps a `langchain.model/ChatModel` — either
   way the advisor only ever produces a `:propose`-effect proposal,
   never a committed record, and LLM parse failures always yield
   `confidence 0.0` (forces escalation, never fabricated confidence).
-- `src/atc_support/governor.cljc` — `ATCSupportGovernor/check`: a pure
+- `src/atc_support/governor.kotoba` — `ATCSupportGovernor/check`: a pure
   function, wired as its own `:govern` node. Hard invariants
   (unregistered controller/facility, a proposal whose `:effect` isn't `:propose`,
   any operation touching clearance issuance / separation / real-time control / safety authority)
@@ -82,7 +82,7 @@ human-in-the-loop interrupt/resume via checkpointing.
   or low advisor confidence) always route to `:request-approval` — an
   `interrupt-before` node that the graph checkpoints and only resumes on
   explicit human approval (`actor/approve!`).
-- `src/atc_support/actor.cljc` — `build-graph`, `run-request!`,
+- `src/atc_support/actor.kotoba` — `build-graph`, `run-request!`,
   `approve!`: the `langgraph.graph/state-graph` wiring itself.
 
 ```bash

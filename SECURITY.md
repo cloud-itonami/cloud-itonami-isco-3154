@@ -4,7 +4,7 @@
 
 This repository implements an air traffic control **administrative support** actor for ground/back-office workflow. **It does not issue clearances, provide separation instructions, make real-time control decisions, or exercise operational authority.**
 
-All safety invariants are enforced in `src/atc_support/governor.cljc`:
+All safety invariants are enforced in `src/atc_support/governor.kotoba`:
 - Hard blocks on any operation touching clearance issuance, separation instructions, real-time control, or any safety-critical operational decision.
 - Equipment anomalies always escalate to human review.
 - No proposal can bypass the Governor.
@@ -23,7 +23,7 @@ If you discover a security vulnerability, **please do not open a public issue**.
 ## Safety-Critical Constraints
 
 - **Scope Exclusion is Permanent**: Any proposal or code change that touches clearance issuance, separation instructions, real-time control, or any safety-critical operational decision is fundamentally out of scope and will be rejected, regardless of how it is framed.
-- **Governor is Unreducible**: The Governor (`src/atc_support/governor.cljc`) gates every operation. Do not attempt to bypass or downgrade safety rules without explicit maintainer consensus.
+- **Governor is Unreducible**: The Governor (`src/atc_support/governor.kotoba`) gates every operation. Do not attempt to bypass or downgrade safety rules without explicit maintainer consensus.
 - **Audit Ledger is Append-Only**: All operations are logged. No retroactive deletion or modification of audit records is permitted.
 
 ## Expectations

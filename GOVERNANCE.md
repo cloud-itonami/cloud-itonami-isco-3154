@@ -8,7 +8,7 @@ This repository designs and maintains the ATC Support Actor reference implementa
 
 ## Decision-Making
 
-- **Architecture & Safety Rules**: Decisions are made transparently via the codebase (src/atc_support/governor.cljc) and the `blueprint.edn` schema.
+- **Architecture & Safety Rules**: Decisions are made transparently via the codebase (src/atc_support/governor.kotoba) and the `blueprint.edn` schema.
 - **Changes to Safety Rules**: Any change to hard invariants or scope exclusions requires review and consensus from the cloud-itonami maintainers.
 - **Code Contributions**: Follow standard open-source practices: fork → branch → PR → review → merge.
 
