@@ -36,7 +36,7 @@ clojure -M:test
 Any proposal or change that touches clearance issuance, separation instructions, real-time control,
 or any safety-critical operational decision is out of scope and will be rejected.
 
-All hard safety invariants and scope exclusions are defined in `src/atc_support/governor.cljc`.
+All hard safety invariants and scope exclusions are defined in `src/atc_support/governor.kotoba`.
 Do not modify these without explicit consensus from the cloud-itonami maintainers.
 
 ## Questions?
