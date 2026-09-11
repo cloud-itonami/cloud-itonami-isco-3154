@@ -10,7 +10,7 @@ Contributions are welcome! This is a cloud-itonami blueprint project for air tra
 4. Write or update tests to ensure your changes work.
 5. Run tests locally:
    ```bash
-   clojure -M:test
+   kbb -M:test
    ```
 6. Commit with clear, descriptive messages.
 7. Push to your fork and open a pull request.
@@ -20,7 +20,7 @@ Contributions are welcome! This is a cloud-itonami blueprint project for air tra
 All code changes must include tests. Run the full test suite before submitting:
 
 ```bash
-clojure -M:test
+kbb -M:test
 ```
 
 ## Code Style
