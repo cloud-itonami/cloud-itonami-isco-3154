@@ -1,6 +1,7 @@
 (ns atc-support.governor-test
   (:require [clojure.test :refer [deftest is testing]]
             [atc-support.store :as store]
+            [atc-support.facts :as facts]
             [atc-support.governor :as governor]))
 
 (defn- fresh-store []
@@ -102,3 +103,46 @@
     (store/append-ledger! st {:disposition :commit})
     (is (= 1 (count (store/operations-of st "PHL"))))
     (is (= 1 (count (store/ledger st))))))
+
+(deftest ok-on-clean-shift-handover-note-at-the-floor
+  ;; Boundary for holds-op-outside-vocabulary: a permitted op at exactly
+  ;; the confidence floor still passes.
+  (let [st (fresh-store)
+        proposal {:op :log-shift-handover-note :effect :propose
+                  :confidence governor/confidence-floor :stake :low}
+        v (governor/check {:controller-id "ctrl-1" :facility-id "PHL"} {} proposal st)]
+    (is (true? (:ok? v)))
+    (is (empty? (:violations v)))))
+
+(deftest holds-op-outside-vocabulary
+  ;; An LLM advisor can return any keyword. Before the closed vocabulary an
+  ;; op in neither list -- here issuing a NOTAM, an aeronautical-information
+  ;; authority act, not administrative support -- committed on confidence
+  ;; alone, because `disallowed-ops` is a list of what is forbidden and a
+  ;; list of forbidden things is never complete.
+  (let [st (fresh-store)
+        proposal {:op :issue-notam :effect :propose :confidence 0.95 :stake :low}
+        v (governor/check {:controller-id "ctrl-1" :facility-id "PHL"} {} proposal st)]
+    (is (false? (:ok? v)))
+    (is (true? (:hard? v)))
+    (is (false? (:escalate? v)))
+    (is (= [:unknown-op] (mapv :rule (:violations v))))))
+
+(deftest holds-unparseable-llm-proposal
+  ;; advisor/parse-proposal yields :op :unknown at confidence 0.0. It used
+  ;; to escalate on low confidence, i.e. a human could approve an op that
+  ;; names nothing; it is held instead.
+  (let [st (fresh-store)
+        proposal {:op :unknown :effect :propose :confidence 0.0 :stake :high}
+        v (governor/check {:controller-id "ctrl-1" :facility-id "PHL"} {} proposal st)]
+    (is (true? (:hard? v)))
+    (is (false? (:escalate? v)))
+    (is (some #(= :unknown-op (:rule %)) (:violations v)))))
+
+(deftest vocabulary-is-the-four-documented-ops
+  (is (= #{:log-shift-handover-note :draft-training-record
+           :flag-equipment-anomaly :coordinate-facility-maintenance}
+         facts/permitted-ops))
+  (is (every? facts/permitted-ops facts/escalating-ops))
+  (is (every? string? (vals facts/op-descriptions)))
+  (is (= facts/permitted-ops (set (keys facts/op-descriptions)))))

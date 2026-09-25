@@ -52,3 +52,22 @@
         ledger (store/ledger st)]
     (is (> (count ledger) 0))
     (is (some #(= :commit (:disposition %)) ledger))))
+
+(deftest holds-llm-proposal-outside-vocabulary-without-committing
+  ;; End to end through llm-advisor: a model reply naming an op the actor
+  ;; has no rule for, at high confidence, must stop at :hold with the
+  ;; reason in the ledger -- not reach :commit.
+  (let [st (store/mem-store)
+        _ (store/register-facility! st {:facility-id "PHL" :name "Philadelphia International" :type "tower"})
+        _ (store/register-controller! st {:controller-id "ctrl-1" :license "Advanced Rating" :facility-id "PHL"})
+        reply "{:op :issue-notam :confidence 0.95 :stake :low}"
+        adv (advisor/llm-advisor nil (fn [_ _ _] {:content reply}) {})
+        g (actor/build-graph {:store st :advisor adv})
+        request {:controller-id "ctrl-1" :facility-id "PHL" :op :log-shift-handover-note :stake :low}
+        result (actor/run-request! g request {} "thread-llm-1")]
+    (is (= :done (:status result)))
+    (is (= :hold (-> result :state :disposition)))
+    (is (nil? (-> result :state :operation)))
+    (is (empty? (store/operations-of st "PHL")))
+    (is (= [:unknown-op]
+           (mapv :rule (get-in (last (store/ledger st)) [:verdict :violations]))))))

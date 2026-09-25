@@ -6,3 +6,6 @@ target/
 *.swo
 *~
 .DS_Store
+
+# kbb/nbb dependency cache
+.nbb/

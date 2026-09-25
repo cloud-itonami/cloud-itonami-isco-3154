@@ -73,21 +73,33 @@ human-in-the-loop interrupt/resume via checkpointing.
   request; `llm-advisor` wraps a `langchain.model/ChatModel` — either
   way the advisor only ever produces a `:propose`-effect proposal,
   never a committed record, and LLM parse failures always yield
-  `confidence 0.0` (forces escalation, never fabricated confidence).
+  `:op :unknown` with `:confidence 0.0` (held by the governor as an
+  unknown op, never fabricated confidence).
 - `src/atc_support/governor.kotoba` — `ATCSupportGovernor/check`: a pure
   function, wired as its own `:govern` node. Hard invariants
   (unregistered controller/facility, a proposal whose `:effect` isn't `:propose`,
-  any operation touching clearance issuance / separation / real-time control / safety authority)
-  always route to `:hold`. Escalation invariants (`:flag-equipment-anomaly`,
+  any operation touching clearance issuance / separation / real-time control / safety authority,
+  and any op outside the actor's four-op vocabulary) always route to `:hold`. Escalation invariants (`:flag-equipment-anomaly`,
   or low advisor confidence) always route to `:request-approval` — an
   `interrupt-before` node that the graph checkpoints and only resumes on
   explicit human approval (`actor/approve!`).
+- `src/atc_support/facts.kotoba` — `permitted-ops` (the four ops the
+  advisor may propose, with their meanings) and `escalating-ops`. The
+  governor holds any op outside this set as `:unknown-op`; before it did,
+  an LLM reply naming e.g. `:issue-notam` at confidence 0.95 reached
+  `:commit`, because `disallowed-ops` lists only what is forbidden.
 - `src/atc_support/actor.kotoba` — `build-graph`, `run-request!`,
   `approve!`: the `langgraph.graph/state-graph` wiring itself.
 
 ```bash
 kbb -M:test
 ```
+
+23 tests / 62 assertions green. `run_tests.kotoba` refuses (exit 2) to
+report a pass below that published count, on 0 sources, or on 0 test
+namespaces; failures exit 1. (`cognitect.test-runner`, which `:test` named
+until 2026-09-25, resolves only `.clj`/`.cljc` and could not run the
+`.kotoba` suite: `kbb test: 0 test namespace(s) found`.)
 
 This is what backs this repo's `:maturity :implemented` entry in
 [`kotoba-lang/occupation`](https://github.com/kotoba-lang/occupation).
