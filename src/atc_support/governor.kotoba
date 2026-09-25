@@ -36,12 +36,19 @@
        real-time control, or any safety-critical operational decision is permanently
        blocked (even :propose effect). HARD block, not escalation. Complete exclusion
        list in :disallowed-ops.
+    4. closed vocabulary — an op outside `facts/permitted-ops` (an LLM can
+       return any keyword, including the advisor's own `:unknown`
+       parse-failure op) is held as `:unknown-op`, never committed or
+       escalated on confidence alone. `disallowed-ops` names what is
+       forbidden; this names what is permitted, and only the second is
+       complete.
 
   ESCALATION invariants (:escalate? true, ALWAYS human sign-off):
-    4. :op :flag-equipment-anomaly (always escalates — equipment anomalies
+    5. :op :flag-equipment-anomaly (always escalates — equipment anomalies
        always surface to human review; never auto-proceed)
-    5. low confidence (< `confidence-floor`)"
-  (:require [atc-support.store :as store]))
+    6. low confidence (< `confidence-floor`)"
+  (:require [atc-support.facts :as facts]
+            [atc-support.store :as store]))
 
 (def confidence-floor 0.6)
 
@@ -63,7 +70,7 @@
 
 (def ^:private escalating-ops
   "Operations that always require human sign-off (escalate via :request-approval)."
-  #{:flag-equipment-anomaly})
+  facts/escalating-ops)
 
 (defn- hard-violations [{:keys [proposal]} controller-record facility-record]
   (cond-> []
@@ -78,7 +85,11 @@
 
     (contains? disallowed-ops (:op proposal))
     (conj {:rule :forbidden-scope
-           :detail "This operation touches clearance issuance, separation instructions, real-time control, or any safety-critical operational decision. Permanently excluded from this actor's scope."})))
+           :detail "This operation touches clearance issuance, separation instructions, real-time control, or any safety-critical operational decision. Permanently excluded from this actor's scope."})
+
+    (not (contains? facts/permitted-ops (:op proposal)))
+    (conj {:rule :unknown-op
+           :detail "op is outside this actor's vocabulary (facts/permitted-ops); held rather than judged on confidence"})))
 
 (defn check
   "Assess a proposal against `request`/`context`/`proposal` and a `store`
